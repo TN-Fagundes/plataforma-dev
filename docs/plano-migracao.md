@@ -31,12 +31,16 @@
 >   com `health: ok`. Mudanças do §7.1 em `auditoria-2.0@c1aca84`. Fora do
 >   escopo por ora: contact points/policies por projeto (SMTP de dev está desligado). Prod
 >   inalterada (D2 = Opção A).
-> - Containers e volumes antigos (`auditoria-2-0-sonar*`, `auditoria-2-0-gitea*`,
->   `auditoria-2-0_loki-data`, `auditoria-2-0_grafana-data`) estão parados e
->   preservados, para rollback. Limpeza futura: o runner `dev-box` (sem contato desde 2026-07-08,
->   sobra da tentativa de runner em container), o volume `auditoria-2-0-gitea_runner-data` e os
->   volumes órfãos `auditoria-2-0_sonar-*`. Caminhos `auditoria-2.0/...` são relativos à raiz
-> daquele repositório; "o projeto", sem qualificação, é o `auditoria-2.0`.
+> - **Limpeza (2026-09-28, autorizada pelo usuário):** apagados os containers antigos de Sonar e
+>   Gitea, os volumes `auditoria-2-0-sonar_*`, `auditoria-2-0-gitea_*` (inclusive `runner-data`),
+>   `auditoria-2-0_sonar-*`, `auditoria-2-0_loki-data` e `auditoria-2-0_grafana-data`, e a rede
+>   `auditoria-2-0-gitea_gitea-net`. **Rollback agora só pelos backups da Fase 0**
+>   (`backups/sonar-db-2026-09-28.sql.gz`, `backups/gitea-dump-2026-09-28.zip`). A rede
+>   `auditoria-2-0-sonar_sonarnet` fica até a ponte sair. O runner `dev-box` (sem contato desde
+>   2026-07-08) sai pela UI do Gitea, com o usuário.
+>
+> Caminhos `auditoria-2.0/...` são relativos à raiz daquele repositório; "o projeto", sem
+> qualificação, é o `auditoria-2.0`.
 > **Relacionado:** `auditoria-2.0/docs/qualidade-codigo-sonarqube.md` (Sonar, Gitea,
 > runner), `auditoria-2.0/CLAUDE.md` § Observabilidade e § Deploy em produção,
 > `auditoria-2.0/docs/adr/0008-testes-e2e.md` (CI do E2E).
