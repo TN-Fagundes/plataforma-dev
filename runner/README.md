@@ -41,9 +41,16 @@ export PATH="$PWD/node/bin:$PATH" && ./act_runner daemon
 
 ## Persistência (Windows)
 
-Tarefa agendada **`GiteaActionsRunner`**: ação
-`wsl.exe -d Ubuntu bash -lc 'cd ~/gitea-runner && export PATH="$PWD/node/bin:$PATH" && exec ./act_runner daemon'`,
-gatilho *AtLogOn*, reinício automático se cair. Usa Task Scheduler porque um serviço systemd de
+Tarefa agendada **`GiteaActionsRunner`** (gatilho *AtLogOn*, até 3 reinícios com 1 min de
+intervalo). Ação: `wsl.exe` com os argumentos
+
+```
+-d Ubuntu bash -lc 'cd ~/gitea-runner && export PATH="$PWD/node/bin:$PATH" && until ./act_runner daemon >>daemon.log 2>&1; do echo "$(date -Is) [supervisor] daemon saiu (instancia indisponivel ou crash); novo retry em 15s" >>daemon.log; sleep 15; done'
+```
+
+O laço `until` reinicia o daemon quando ele sai, por exemplo com o Gitea fora do ar. Por isso o
+runner aguenta parada e migração do Gitea sem intervenção: volta sozinho quando a instância
+responde. Log em `~/gitea-runner/daemon.log`. Usa Task Scheduler porque um serviço systemd de
 sistema exige sudo.
 
 ```powershell

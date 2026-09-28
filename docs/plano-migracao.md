@@ -13,8 +13,15 @@
 >   ainda tem o `ci.yml` antigo. Desfazer quando a `develop` for integrada na `master`:
 >   `docker network disconnect auditoria-2-0-sonar_sonarnet plataforma-sonar-sonarqube-1`.
 >   (A ponte não sobrevive a um `up` que recrie o container.)
-> - Containers e volumes antigos (`auditoria-2-0-sonar*`) estão parados e preservados, para
->   rollback. Caminhos `auditoria-2.0/...` são relativos à raiz
+> - **Fase 2 (Gitea):** volume copiado, no ar em `plataforma-gitea` (mesma porta 3001). Validado:
+>   6.4-1 (healthz 200), 6.4-2 (repo com os mesmos refs, usuário `tnfagundes`, segredo
+>   `SONAR_TOKEN`), 6.4-3 (runner `dev-box-wsl` reconectou sozinho) e 6.4-5 (`git push gitea`).
+>   Mudanças do §6.3 em `auditoria-2.0@bd8c4ed`; o checkout via `GITHUB_SERVER_URL` funcionou no
+>   job `quality`. **Pendente:** 6.4-4 (os dois jobs verdes nesse push).
+> - Containers e volumes antigos (`auditoria-2-0-sonar*`, `auditoria-2-0-gitea*`) estão parados e
+>   preservados, para rollback. Limpeza futura: o runner `dev-box` (sem contato desde 2026-07-08,
+>   sobra da tentativa de runner em container), o volume `auditoria-2-0-gitea_runner-data` e os
+>   volumes órfãos `auditoria-2-0_sonar-*`. Caminhos `auditoria-2.0/...` são relativos à raiz
 > daquele repositório; "o projeto", sem qualificação, é o `auditoria-2.0`.
 > **Relacionado:** `auditoria-2.0/docs/qualidade-codigo-sonarqube.md` (Sonar, Gitea,
 > runner), `auditoria-2.0/CLAUDE.md` § Observabilidade e § Deploy em produção,

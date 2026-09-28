@@ -3,8 +3,8 @@
 Ferramentas de desenvolvimento compartilhadas entre projetos: **Gitea** (git + CI),
 **SonarQube** (qualidade) e **Grafana/Loki/Promtail** (logs). Uso exclusivo em intranet.
 
-> **Status (2026-09-28):** **SonarQube migrado** e rodando daqui. Gitea e observabilidade
-> ainda rodam a partir do repositório `auditoria-2.0`. Detalhes no topo do
+> **Status (2026-09-28):** **SonarQube e Gitea migrados** e rodando daqui. A observabilidade
+> ainda roda a partir do repositório `auditoria-2.0`. Detalhes no topo do
 > [plano](docs/plano-migracao.md).
 
 | Ferramenta | Pasta | Projeto Compose | URL |
