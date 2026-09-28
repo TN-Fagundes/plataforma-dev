@@ -30,17 +30,24 @@ Nada é buildado: as imagens são as oficiais do Grafana, e os configs entram po
   grafana/alerting-prod/alerting.yml
 ```
 
+Host e caminhos ficam no `.env` da raiz do `plataforma-dev` (não versionado), nas variáveis
+`PROD_SSH`, `PROD_OBS_DIR` e `PROD_APP_DIR` (ver [.env.example](../.env.example)). A partir da
+raiz, na máquina de dev:
+
 ```bash
-# aqui (máquina dev), a partir da raiz do plataforma-dev
-scp -r observabilidade/docker-compose.prod.yml observabilidade/.env.prod.example \
-       observabilidade/loki observabilidade/promtail observabilidade/grafana \
-       user@<servidor>:/caminho/observabilidade/
+make obs-prod-check   # só leitura: projetos compose, containers, volumes e os dois diretórios
+make obs-prod-copy    # mkdir + scp dos arquivos acima + .env.prod (se faltar) + permissões
 ```
 
-**Depois de cada cópia, rode `chmod -R a+rX /caminho/observabilidade` no servidor.** O Grafana
-roda como uid **472** e precisa atravessar cada diretório montado. Um `scp -r` com `umask 0077`
-cria diretórios `700`, e o Grafana sobe **sem ler o provisioning**: sem datasource e sem contact
-point, com um `Permission denied` visível só em `docker compose logs grafana`.
+O `obs-prod-copy` pode ser rodado de novo a cada mudança de config: não sobrescreve um
+`.env.prod` já preenchido. Ele não sobe nem derruba nada; isso é manual, no servidor.
+
+**Depois de cada cópia, os diretórios precisam de `a+rX`** (o `obs-prod-copy` já aplica; numa
+cópia manual, rode `chmod -R a+rX /caminho/observabilidade` no servidor). O Grafana roda como
+uid **472** e precisa atravessar cada diretório montado. Um `scp -r` com `umask 0077` cria
+diretórios `700`, e o Grafana sobe **sem ler o provisioning**: sem datasource e sem contact point,
+com um `Permission denied` visível só em `docker compose logs grafana`. O `.env.prod` fica `600`:
+quem o lê é o `docker compose`, não o Grafana.
 
 ## Operação
 
@@ -100,8 +107,9 @@ plataforma. O regime de retenção desse dado ainda não está declarado nos req
 Feita uma vez, no servidor de produção. Até o ADR-0013, o `auditoria-2.0` subia Loki, Promtail e
 Grafana no próprio `docker-compose.yml`, com o Grafana na porta 3001.
 
-1. **Copiar esta stack** para o servidor (seção *Estrutura no servidor*), criar o `.env.prod`,
-   rodar o `chmod`. **Ainda não subir**: a 3001 está com o Grafana antigo.
+1. **Copiar esta stack** para o servidor: `make obs-prod-check` e `make obs-prod-copy` (seção
+   *Estrutura no servidor*), depois preencher o `.env.prod` lá. **Ainda não subir**: a 3001 está
+   com o Grafana antigo.
 2. **Atualizar o `auditoria-2.0`** no servidor com a versão que já não traz a stack de logs
    (`docker-compose.yml` e `Makefile` novos) e rodar `make up-prod`. O alvo usa
    `--remove-orphans`, que remove os containers `loki`, `promtail` e `grafana` antigos e libera a

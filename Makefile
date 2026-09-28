@@ -2,7 +2,7 @@
 
 .PHONY: help network up down ps \
         sonar-up sonar-down gitea-up gitea-down obs-up obs-down \
-        backup-sonar backup-gitea copiar-volume
+        backup-sonar backup-gitea copiar-volume obs-prod-check obs-prod-copy
 
 SONAR = docker compose -f sonarqube/docker-compose.yml --env-file .env
 GITEA = docker compose -f gitea/docker-compose.yml --env-file .env
@@ -22,6 +22,7 @@ help:
 	@echo "Observabilidade: obs-up | obs-down            http://localhost:3002"
 	@echo "Backup:          backup-sonar | backup-gitea  (saida em backups/)"
 	@echo "Migracao:        copiar-volume DE=<volume> PARA=<volume>"
+	@echo "Obs. de prod:    obs-prod-check | obs-prod-copy   (PROD_* no .env; ver observabilidade/PRODUCAO.md)"
 
 .env:
 	cp .env.example .env
@@ -74,3 +75,31 @@ copiar-volume:
 	@! docker volume inspect $(PARA) >/dev/null 2>&1 || (echo "$(PARA) ja existe: remova-o antes (docker volume rm) ou escolha outro nome"; exit 1)
 	docker volume create $(PARA)
 	docker run --rm -v $(DE):/de:ro -v $(PARA):/para alpine sh -c 'cp -a /de/. /para/'
+
+# Observabilidade de PRODUÇÃO: os alvos rodam aqui e agem no servidor por ssh/scp.
+# Host e caminhos vêm do .env (PROD_*), nunca do git. Só leem e copiam: subir e
+# derrubar containers no servidor continua manual (observabilidade/PRODUCAO.md).
+PROD_ENV = eval "$$(grep -E '^PROD_(SSH|OBS_DIR|APP_DIR)=' .env | tr -d '\r' | sed 's/^/export /')" && \
+	{ test -n "$$PROD_SSH" -a -n "$$PROD_OBS_DIR" -a -n "$$PROD_APP_DIR" || \
+	  { echo "defina PROD_SSH, PROD_OBS_DIR e PROD_APP_DIR no .env (ver .env.example)"; exit 1; }; }
+
+# Só leitura: o que roda no servidor e o que existe nos caminhos configurados.
+obs-prod-check: .env
+	@$(PROD_ENV) && ssh "$$PROD_SSH" "\
+	  echo '== projetos compose'; docker compose ls; \
+	  echo '== containers'; docker ps --format '{{.Names}}\t{{.Image}}\t{{.Ports}}'; \
+	  echo '== volumes'; docker volume ls --format '{{.Name}}' | grep -E 'storage|obs'; \
+	  echo \"== $$PROD_APP_DIR\"; ls -la '$$PROD_APP_DIR'; \
+	  echo \"== $$PROD_OBS_DIR\"; ls -la '$$PROD_OBS_DIR' 2>/dev/null || echo '(nao existe)'"
+
+# O chmod a+rX vem ANTES do 600 do .env.prod: o Grafana (uid 472) precisa atravessar
+# os diretórios montados, e o .env.prod só é lido pelo docker compose. O `cp -n` não
+# sobrescreve um .env.prod já preenchido, então o alvo pode ser rodado de novo.
+obs-prod-copy: .env
+	@$(PROD_ENV) && set -x && \
+	ssh "$$PROD_SSH" "mkdir -p '$$PROD_OBS_DIR'" && \
+	scp -r observabilidade/docker-compose.prod.yml observabilidade/.env.prod.example \
+	       observabilidade/loki observabilidade/promtail observabilidade/grafana \
+	       "$$PROD_SSH:$$PROD_OBS_DIR/" && \
+	ssh "$$PROD_SSH" "cd '$$PROD_OBS_DIR' && cp -n .env.prod.example .env.prod; \
+	  chmod -R a+rX . && chmod 600 .env.prod && find . -exec ls -ld {} +"
