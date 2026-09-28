@@ -1,3 +1,4 @@
 .env
 # Saída de `make backup-*`: dumps com dados e segredos, nunca versionar.
 backups/
+.env.prod

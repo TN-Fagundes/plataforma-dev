@@ -1,0 +1,30 @@
+# Contact point e notification policy do Grafana de PRODUÇÃO.
+# Origem: auditoria-2.0/docker/grafana/provisioning/alerting/alerting.yml.
+# Docs: https://grafana.com/docs/grafana/latest/alerting/set-up/provision-alerting-resources/file-provisioning/
+#
+# São da INSTÂNCIA, não de um projeto: o grafana-sync.sh envia só dashboards e
+# regras. Hoje todo alerta vai para um único destinatário (GF_ALERTING_EMAIL_TO).
+# Quando um segundo projeto precisar de outro destinatário, acrescente um contact
+# point e uma rota filha casando o label `project` da regra (ou uma label própria
+# que a regra declare), sem mexer na rota raiz.
+
+apiVersion: 1
+
+contactPoints:
+  - orgId: 1
+    name: email-alertas
+    receivers:
+      - uid: email-alertas
+        type: email
+        settings:
+          addresses: "${GF_ALERTING_EMAIL_TO}"
+          singleEmail: true
+        disableResolveMessage: false
+
+policies:
+  - orgId: 1
+    receiver: email-alertas
+    group_by: ['alertname']
+    group_wait: 30s
+    group_interval: 5m
+    repeat_interval: 4h

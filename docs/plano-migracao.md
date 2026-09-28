@@ -38,6 +38,13 @@
 >   (`backups/sonar-db-2026-09-28.sql.gz`, `backups/gitea-dump-2026-09-28.zip`). A rede
 >   `auditoria-2-0-sonar_sonarnet` fica até a ponte sair. O runner `dev-box` (sem contato desde
 >   2026-07-08) sai pela UI do Gitea, com o usuário.
+> - **D2 revista (2026-09-28): Opção B.** O Grafana de produção vai para uma instância central,
+>   **separada da de dev**, rodando como **stack própria no servidor de produção** (não num host
+>   dedicado, que não existe). Versionada em `observabilidade/docker-compose.prod.yml`, com os
+>   mesmos configs de Loki/Promtail/datasource de dev e contact point próprio
+>   (`grafana/alerting-prod/`); deploy, sync e migração em `observabilidade/PRODUCAO.md`. No
+>   `auditoria-2.0`: ADR-0013, stack embutida removida do compose de prod, `grafana-sync-prod`.
+>   **Pendente:** executar a migração no servidor (PRODUCAO.md, seção final).
 >
 > Caminhos `auditoria-2.0/...` são relativos à raiz daquele repositório; "o projeto", sem
 > qualificação, é o `auditoria-2.0`.

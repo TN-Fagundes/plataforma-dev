@@ -7,8 +7,8 @@
 # - Grafana: porta 3002. Dashboards e alertas são de cada projeto, versionados no
 #   repo dele e enviados pela API (`make grafana-sync` do projeto).
 #
-# Produção NÃO usa esta stack: lá Loki/Grafana seguem embutidos no deploy de cada
-# aplicação até a decisão D2 (docs/plano-migracao.md §7.2).
+# Produção NÃO usa esta instância: tem a sua, separada, em docker-compose.prod.yml
+# (decisão D2 = Opção B, docs/plano-migracao.md §7.2; operação em PRODUCAO.md).
 
 name: plataforma-obs
 

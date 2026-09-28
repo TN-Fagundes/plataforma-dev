@@ -1,0 +1,88 @@
+# Observabilidade de PRODUÇÃO: Loki + Promtail + Grafana centrais, numa stack
+# própria no servidor de produção, fora do deploy de qualquer aplicação
+# (decisão D2 = Opção B, docs/plano-migracao.md §7.2; ADR-0013 do auditoria-2.0).
+#
+# Instância SEPARADA da de dev (docker-compose.yml, ao lado). As duas usam os
+# mesmos configs de Loki, Promtail e datasource; o que só existe aqui é o
+# contact point dos alertas (grafana/alerting-prod/).
+#
+# - Promtail: lê o docker.sock DESTE host e só coleta containers com o label
+#   `logging: promtail` (opt-in). App de outro host não entra por este Promtail:
+#   precisa de um Promtail lá, empurrando para este Loki (ver PRODUCAO.md).
+# - Loki: sem porta publicada; só o Grafana e o Promtail o alcançam.
+# - Grafana: porta 3001 (a mesma do Grafana que vinha embutido no auditoria-2.0).
+#   Dashboards e regras de alerta chegam de cada projeto pela API
+#   (`make grafana-sync-prod` do projeto); contact points e policies são da
+#   instância e vêm do provisioning abaixo.
+#
+# Operação e deploy no servidor: PRODUCAO.md.
+
+name: plataforma-obs-prod
+
+services:
+  loki:
+    image: grafana/loki:3.0.0
+    command: -config.file=/etc/loki/config.yml
+    volumes:
+      - ./loki/config.yml:/etc/loki/config.yml:ro
+      - loki-data:/loki
+    environment:
+      TZ: America/Sao_Paulo
+    networks: [obs]
+    restart: unless-stopped
+
+  promtail:
+    image: grafana/promtail:3.0.0
+    command: -config.file=/etc/promtail/config.yml
+    volumes:
+      - ./promtail/config.yml:/etc/promtail/config.yml:ro
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+    environment:
+      TZ: America/Sao_Paulo
+    depends_on:
+      - loki
+    networks: [obs]
+    restart: unless-stopped
+
+  grafana:
+    image: grafana/grafana:11.0.0
+    ports:
+      - "${GRAFANA_PORT:-3001}:3000"
+    environment:
+      GF_SECURITY_ADMIN_USER: admin
+      GF_SECURITY_ADMIN_PASSWORD: ${GRAFANA_PASSWORD:?defina GRAFANA_PASSWORD no .env.prod}
+      GF_USERS_ALLOW_SIGN_UP: "false"
+      TZ: America/Sao_Paulo
+      GF_SMTP_ENABLED: ${GF_SMTP_ENABLED:-true}
+      GF_SMTP_HOST: ${GF_SMTP_HOST:-}
+      GF_SMTP_USER: ${GF_SMTP_USER:-}
+      GF_SMTP_PASSWORD: ${GF_SMTP_PASSWORD:-}
+      GF_SMTP_FROM_ADDRESS: ${GF_SMTP_FROM_ADDRESS:-grafana@plataforma.local}
+      GF_SMTP_FROM_NAME: ${GF_SMTP_FROM_NAME:-Grafana Producao}
+      GF_SMTP_SKIP_VERIFY: ${GF_SMTP_SKIP_VERIFY:-true}
+      # GF_ALERTING_EMAIL_TO NAO PODE FICAR VAZIA: o contact point provisionado
+      # em alerting-prod/alerting.yml a interpola em "addresses", o Grafana recusa
+      # o contact point vazio ("could not find addresses in settings") e ABORTA O
+      # BOOT, sem provisionar nem o datasource. O default existe para o boot nunca
+      # depender do .env.prod; o endereço real tem que estar lá para o alerta
+      # chegar em alguém.
+      GF_ALERTING_EMAIL_TO: ${GF_ALERTING_EMAIL_TO:-admin@plataforma.local}
+    volumes:
+      # Subpastas montadas uma a uma: datasource e providers são os mesmos de dev;
+      # o alerting (contact point + policy) só existe em prod.
+      - ./grafana/provisioning/datasources:/etc/grafana/provisioning/datasources:ro
+      - ./grafana/provisioning/dashboards:/etc/grafana/provisioning/dashboards:ro
+      - ./grafana/alerting-prod:/etc/grafana/provisioning/alerting:ro
+      - grafana-data:/var/lib/grafana
+    depends_on:
+      - loki
+    networks: [obs]
+    restart: unless-stopped
+
+volumes:
+  loki-data:
+  grafana-data:
+
+networks:
+  obs:
+    driver: bridge

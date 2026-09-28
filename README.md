@@ -4,7 +4,8 @@ Ferramentas de desenvolvimento compartilhadas entre projetos: **Gitea** (git + C
 **SonarQube** (qualidade) e **Grafana/Loki/Promtail** (logs). Uso exclusivo em intranet.
 
 > **Status (2026-09-28):** **SonarQube, Gitea e observabilidade de dev migrados** e rodando
-> daqui. Detalhes no topo do
+> daqui. A **observabilidade de produção** (instância separada, no servidor de prod) está
+> versionada aqui e aguarda o deploy no servidor. Detalhes no topo do
 > [plano](docs/plano-migracao.md).
 
 | Ferramenta | Pasta | Projeto Compose | URL |
@@ -12,6 +13,7 @@ Ferramentas de desenvolvimento compartilhadas entre projetos: **Gitea** (git + C
 | SonarQube | [sonarqube/](sonarqube/) | `plataforma-sonar` | http://localhost:9000 |
 | Gitea | [gitea/](gitea/) | `plataforma-gitea` | http://localhost:3001 |
 | Loki + Promtail + Grafana (dev) | [observabilidade/](observabilidade/) | `plataforma-obs` | http://localhost:3002 |
+| Loki + Promtail + Grafana (**prod**) | [observabilidade/PRODUCAO.md](observabilidade/PRODUCAO.md) | `plataforma-obs-prod` | http://<servidor-prod>:3001 |
 | Runner do CI (nativo, WSL) | [runner/](runner/) | — | — |
 
 ## Uso
