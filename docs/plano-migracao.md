@@ -1,9 +1,19 @@
 # Plano de migração — tirar Gitea, SonarQube e Grafana do `auditoria-2.0`
 
-> **Status:** Fase 0 em andamento (2026-09-28). Feito: repo com a estrutura da §3.1, rede
-> `devtools`, backups de Sonar e Gitea, inventário (Gitea: usuário `tnfagundes`, segredo
-> `SONAR_TOKEN`). Pendente: rotacionar A2 e registrar D1. Nenhum arquivo do `auditoria-2.0` foi
-> alterado. Caminhos `auditoria-2.0/...` são relativos à raiz
+> **Status (2026-09-28):**
+> - **Fase 0:** repo com a estrutura da §3.1, rede `devtools`, backups de Sonar e Gitea,
+>   inventário (Gitea: usuário `tnfagundes`, segredo `SONAR_TOKEN`). D1 = (a). **Pendente:**
+>   rotacionar A2.
+> - **Fase 1 (Sonar):** servidor migrado por cópia de volume e no ar em `plataforma-sonar`;
+>   validações 5.3-1 e 5.3-2 ok (projeto, histórico, gate, profiles com S1135 desativada). As
+>   mudanças do §5.2 estão no working tree do `auditoria-2.0`, ainda **sem commit**. **Pendente:**
+>   5.3-3 a 5.3-5 (`make sonar`, job `quality` no CI, SonarLint).
+> - **Ponte temporária:** o `plataforma-sonar-sonarqube-1` também está na rede antiga
+>   `auditoria-2-0-sonar_sonarnet`, com alias `sonarqube`, para o `ci.yml` antigo seguir
+>   funcionando até o push. Desfazer depois do CI verde com o `ci.yml` novo:
+>   `docker network disconnect auditoria-2-0-sonar_sonarnet plataforma-sonar-sonarqube-1`.
+> - Containers e volumes antigos (`auditoria-2-0-sonar*`) estão parados e preservados, para
+>   rollback. Caminhos `auditoria-2.0/...` são relativos à raiz
 > daquele repositório; "o projeto", sem qualificação, é o `auditoria-2.0`.
 > **Relacionado:** `auditoria-2.0/docs/qualidade-codigo-sonarqube.md` (Sonar, Gitea,
 > runner), `auditoria-2.0/CLAUDE.md` § Observabilidade e § Deploy em produção,

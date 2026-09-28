@@ -3,9 +3,9 @@
 Ferramentas de desenvolvimento compartilhadas entre projetos: **Gitea** (git + CI),
 **SonarQube** (qualidade) e **Grafana/Loki/Promtail** (logs). Uso exclusivo em intranet.
 
-> **Status (2026-09-28):** Fase 0 do plano. Composes, Makefile e runbooks prontos e validados
-> (`docker compose config`); rede `devtools` criada; backups feitos. **Nenhuma ferramenta
-> migrada ainda**: todas continuam rodando a partir do repositório `auditoria-2.0`.
+> **Status (2026-09-28):** **SonarQube migrado** e rodando daqui. Gitea e observabilidade
+> ainda rodam a partir do repositório `auditoria-2.0`. Detalhes no topo do
+> [plano](docs/plano-migracao.md).
 
 | Ferramenta | Pasta | Projeto Compose | URL |
 |---|---|---|---|
