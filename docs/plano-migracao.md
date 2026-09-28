@@ -18,7 +18,19 @@
 >   `SONAR_TOKEN`), 6.4-3 (runner `dev-box-wsl` reconectou sozinho) e 6.4-5 (`git push gitea`).
 >   Mudanças do §6.3 em `auditoria-2.0@bd8c4ed`; o checkout via `GITHUB_SERVER_URL` funcionou no
 >   job `quality`. 6.4-4 ok: `quality` (gate OK, 16:20 UTC) e `e2e` verdes nesse push.
-> - Containers e volumes antigos (`auditoria-2-0-sonar*`, `auditoria-2-0-gitea*`) estão parados e
+> - **A1/A4:** corrigidos em `auditoria-2.0@b1f2334`. Os alertas não disparavam em ambiente
+>   nenhum (o seletor por container não casava nada nem em dev); agora filtram por
+>   `project`+`service`, ignoram os containers `*-run-*` (suíte de testes) e leem status/nível do
+>   JSON. Prod só recebe no próximo deploy.
+> - **Fase 3.1 (observabilidade de dev):** `plataforma-obs` no ar, começando sem histórico (decisão
+>   do usuário). Promtail por opt-in (`logging: promtail`), já recebendo `app`/`nginx`/`scheduler`
+>   de `auditoria-2-0`. `grafana-sync.sh` (genérico, nesta pasta) enviou dashboard e 3 regras pela
+>   API, com token de service account `sync-auditoria-2-0` no `.env` do projeto; as regras avaliam
+>   com `health: ok`. Mudanças do §7.1 no working tree do `auditoria-2.0`, **sem commit**. Fora do
+>   escopo por ora: contact points/policies por projeto (SMTP de dev está desligado). Prod
+>   inalterada (D2 = Opção A).
+> - Containers e volumes antigos (`auditoria-2-0-sonar*`, `auditoria-2-0-gitea*`,
+>   `auditoria-2-0_loki-data`, `auditoria-2-0_grafana-data`) estão parados e
 >   preservados, para rollback. Limpeza futura: o runner `dev-box` (sem contato desde 2026-07-08,
 >   sobra da tentativa de runner em container), o volume `auditoria-2-0-gitea_runner-data` e os
 >   volumes órfãos `auditoria-2-0_sonar-*`. Caminhos `auditoria-2.0/...` são relativos à raiz
