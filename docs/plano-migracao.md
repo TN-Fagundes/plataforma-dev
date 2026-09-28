@@ -4,14 +4,15 @@
 > - **Fase 0:** repo com a estrutura da §3.1, rede `devtools`, backups de Sonar e Gitea,
 >   inventário (Gitea: usuário `tnfagundes`, segredo `SONAR_TOKEN`). D1 = (a). **Pendente:**
 >   rotacionar A2.
-> - **Fase 1 (Sonar):** servidor migrado por cópia de volume e no ar em `plataforma-sonar`;
->   validações 5.3-1 e 5.3-2 ok (projeto, histórico, gate, profiles com S1135 desativada). As
->   mudanças do §5.2 estão no working tree do `auditoria-2.0`, ainda **sem commit**. **Pendente:**
->   5.3-3 a 5.3-5 (`make sonar`, job `quality` no CI, SonarLint).
+> - **Fase 1 (Sonar): concluída.** Servidor migrado por cópia de volume, no ar em
+>   `plataforma-sonar`. Mudanças do §5.2 em `auditoria-2.0@ccf08ca` (`develop`). Validado: 5.3-1,
+>   5.3-2 (projeto, histórico, gate, profiles com S1135 desativada) e 5.3-4 (job `quality` verde
+>   com o `ci.yml` novo, gate OK em 16:11 UTC). **Pendente:** 5.3-5 (SonarLint no editor).
 > - **Ponte temporária:** o `plataforma-sonar-sonarqube-1` também está na rede antiga
->   `auditoria-2-0-sonar_sonarnet`, com alias `sonarqube`, para o `ci.yml` antigo seguir
->   funcionando até o push. Desfazer depois do CI verde com o `ci.yml` novo:
+>   `auditoria-2-0-sonar_sonarnet`, com alias `sonarqube`, porque a `master` do `auditoria-2.0`
+>   ainda tem o `ci.yml` antigo. Desfazer quando a `develop` for integrada na `master`:
 >   `docker network disconnect auditoria-2-0-sonar_sonarnet plataforma-sonar-sonarqube-1`.
+>   (A ponte não sobrevive a um `up` que recrie o container.)
 > - Containers e volumes antigos (`auditoria-2-0-sonar*`) estão parados e preservados, para
 >   rollback. Caminhos `auditoria-2.0/...` são relativos à raiz
 > daquele repositório; "o projeto", sem qualificação, é o `auditoria-2.0`.
