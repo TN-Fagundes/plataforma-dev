@@ -1,0 +1,68 @@
+# SonarQube da plataforma: servidor compartilhado entre projetos.
+#
+# Só o SERVIDOR (sonarqube + sonar-db). O scanner é de cada projeto e fica no
+# repositório dele (ex.: auditoria-2.0/docker-compose.sonar.yml), ligado à rede
+# `devtools` para alcançar este servidor como http://sonarqube:9000.
+#
+# Pré-requisitos de host, backup e rotação de token: ver runbook.md.
+#
+# Imagem fixada na versão que rodava no auditoria-2.0 na migração (2026-09-28),
+# para a cópia de volume não disparar upgrade de schema. Upgrade é passo à parte,
+# sempre depois de um backup (runbook.md).
+
+name: plataforma-sonar
+
+services:
+  sonarqube:
+    image: sonarqube:26.6.0.123539-community
+    depends_on:
+      - sonar-db
+    environment:
+      SONAR_JDBC_URL: jdbc:postgresql://sonar-db:5432/sonar
+      SONAR_JDBC_USERNAME: ${SONAR_DB_USER:-sonar}
+      SONAR_JDBC_PASSWORD: ${SONAR_DB_PASSWORD:-sonar}
+    ports:
+      - "${SONAR_PORT:-9000}:9000"
+    volumes:
+      - sonar-data:/opt/sonarqube/data
+      - sonar-extensions:/opt/sonarqube/extensions
+      - sonar-logs:/opt/sonarqube/logs
+    # SonarQube não sobe se o mmap do Elasticsearch estiver bloqueado.
+    ulimits:
+      nofile:
+        soft: 65536
+        hard: 65536
+    healthcheck:
+      test: ["CMD-SHELL", "curl -sf http://localhost:9000/api/system/status | grep -q '\"status\":\"UP\"'"]
+      interval: 15s
+      timeout: 5s
+      retries: 20
+      start_period: 90s
+    # default: fala com o sonar-db; devtools: recebe os scanners dos projetos.
+    networks: [default, devtools]
+    restart: unless-stopped
+
+  sonar-db:
+    image: postgres:17-alpine
+    # Postgres DEDICADO ao Sonar: não reutilizar banco de nenhum projeto.
+    environment:
+      POSTGRES_DB: sonar
+      POSTGRES_USER: ${SONAR_DB_USER:-sonar}
+      POSTGRES_PASSWORD: ${SONAR_DB_PASSWORD:-sonar}
+    volumes:
+      - sonar-db-data:/var/lib/postgresql/data
+    # Fora da devtools: só o sonarqube fala com ele.
+    networks: [default]
+    restart: unless-stopped
+
+volumes:
+  sonar-data:
+  sonar-extensions:
+  sonar-logs:
+  sonar-db-data:
+
+networks:
+  default: {}
+  devtools:
+    external: true
+    name: devtools

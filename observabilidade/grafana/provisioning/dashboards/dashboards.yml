@@ -1,0 +1,12 @@
+# Provisioning de dashboards do Grafana da plataforma.
+#
+# Vazio de propósito: dashboards e alertas são de CADA projeto, versionados no
+# repositório dele e enviados pela API do Grafana (`make grafana-sync` do projeto,
+# docs/plano-migracao.md §7.1). Assim a plataforma não conhece caminhos de projeto
+# e o mesmo fluxo vale quando o Grafana estiver noutro host.
+#
+# Só use um provider `type: file` aqui para painéis da PRÓPRIA plataforma.
+
+apiVersion: 1
+
+providers: []

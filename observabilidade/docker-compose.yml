@@ -1,0 +1,71 @@
+# Observabilidade da plataforma (DEV): Loki + Promtail + Grafana compartilhados.
+#
+# - Loki: sem porta publicada; os consumidores o alcançam pela rede `devtools`
+#   (loki:3100) e o humano, pelo Grafana.
+# - Promtail: UM por host, lê o docker.sock local. Só coleta containers que
+#   declaram o label `logging: promtail` (opt-in, ver promtail/config.yml).
+# - Grafana: porta 3002. Dashboards e alertas são de cada projeto, versionados no
+#   repo dele e enviados pela API (`make grafana-sync` do projeto).
+#
+# Produção NÃO usa esta stack: lá Loki/Grafana seguem embutidos no deploy de cada
+# aplicação até a decisão D2 (docs/plano-migracao.md §7.2).
+
+name: plataforma-obs
+
+services:
+  loki:
+    image: grafana/loki:3.0.0
+    command: -config.file=/etc/loki/config.yml
+    volumes:
+      - ./loki/config.yml:/etc/loki/config.yml:ro
+      - loki-data:/loki
+    environment:
+      TZ: America/Sao_Paulo
+    networks: [devtools]
+    restart: unless-stopped
+
+  promtail:
+    image: grafana/promtail:3.0.0
+    command: -config.file=/etc/promtail/config.yml
+    volumes:
+      - ./promtail/config.yml:/etc/promtail/config.yml:ro
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+    environment:
+      TZ: America/Sao_Paulo
+    depends_on:
+      - loki
+    networks: [devtools]
+    restart: unless-stopped
+
+  grafana:
+    image: grafana/grafana:11.0.0
+    ports:
+      - "${GRAFANA_PORT:-3002}:3000"
+    environment:
+      GF_SECURITY_ADMIN_USER: admin
+      GF_SECURITY_ADMIN_PASSWORD: ${GRAFANA_PASSWORD:-admin}
+      GF_USERS_ALLOW_SIGN_UP: "false"
+      TZ: America/Sao_Paulo
+      GF_SMTP_ENABLED: ${GF_SMTP_ENABLED:-false}
+      GF_SMTP_HOST: ${GF_SMTP_HOST:-}
+      GF_SMTP_USER: ${GF_SMTP_USER:-}
+      GF_SMTP_PASSWORD: ${GF_SMTP_PASSWORD:-}
+      GF_SMTP_FROM_ADDRESS: ${GF_SMTP_FROM_ADDRESS:-grafana@plataforma.local}
+      GF_SMTP_FROM_NAME: ${GF_SMTP_FROM_NAME:-Grafana Plataforma}
+      GF_SMTP_SKIP_VERIFY: ${GF_SMTP_SKIP_VERIFY:-true}
+    volumes:
+      - ./grafana/provisioning:/etc/grafana/provisioning:ro
+      - grafana-data:/var/lib/grafana
+    depends_on:
+      - loki
+    networks: [devtools]
+    restart: unless-stopped
+
+volumes:
+  loki-data:
+  grafana-data:
+
+networks:
+  devtools:
+    external: true
+    name: devtools

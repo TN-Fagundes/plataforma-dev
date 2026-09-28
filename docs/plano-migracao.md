@@ -1,7 +1,9 @@
 # Plano de migração — tirar Gitea, SonarQube e Grafana do `auditoria-2.0`
 
-> **Status:** análise e plano (2026-09-28). **Nada executado.** Nenhum arquivo do `auditoria-2.0` foi
-> alterado para produzir este documento. Caminhos `auditoria-2.0/...` são relativos à raiz
+> **Status:** Fase 0 em andamento (2026-09-28). Feito: repo com a estrutura da §3.1, rede
+> `devtools`, backups de Sonar e Gitea, inventário (Gitea: usuário `tnfagundes`, segredo
+> `SONAR_TOKEN`). Pendente: rotacionar A2 e registrar D1. Nenhum arquivo do `auditoria-2.0` foi
+> alterado. Caminhos `auditoria-2.0/...` são relativos à raiz
 > daquele repositório; "o projeto", sem qualificação, é o `auditoria-2.0`.
 > **Relacionado:** `auditoria-2.0/docs/qualidade-codigo-sonarqube.md` (Sonar, Gitea,
 > runner), `auditoria-2.0/CLAUDE.md` § Observabilidade e § Deploy em produção,

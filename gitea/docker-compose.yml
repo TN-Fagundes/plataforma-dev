@@ -1,0 +1,53 @@
+# Gitea da plataforma: git hosting + CI (Gitea Actions) compartilhado entre projetos.
+#
+# O RUNNER NÃO É CONTAINERIZADO: roda nativo no WSL em host mode, porque precisa
+# orquestrar o `docker compose` dos projetos. Ver ../runner/README.md.
+# SQLite mantém o footprint baixo; Postgres só quando houver muitos usuários/repos.
+#
+# Imagem fixada na versão que rodava no auditoria-2.0 na migração (2026-09-28).
+# Upgrade é passo à parte, depois da migração validada e de um `make backup-gitea`.
+#
+# SETUP EM INSTÂNCIA NOVA (a migração copia o volume e pula isto):
+#   1. make gitea-up
+#   2. Admin (username != "admin", que é reservado):
+#        docker compose -f gitea/docker-compose.yml exec -u git gitea \
+#          gitea admin user create --admin --username <user> --password <senha> \
+#          --email <email> --must-change-password=false
+#   3. Token de registro do runner (de INSTÂNCIA, serve a todos os repos):
+#        docker compose -f gitea/docker-compose.yml exec -u git gitea \
+#          gitea actions generate-runner-token
+
+name: plataforma-gitea
+
+services:
+  gitea:
+    image: gitea/gitea:1.22.6
+    environment:
+      USER_UID: ${UID:-1000}
+      USER_GID: ${GID:-1000}
+      GITEA__database__DB_TYPE: sqlite3
+      GITEA__server__ROOT_URL: ${GITEA_ROOT_URL:-http://localhost:3001/}
+      GITEA__server__HTTP_PORT: 3000
+      GITEA__server__SSH_PORT: ${GITEA_SSH_PORT:-2222}
+      GITEA__server__DOMAIN: ${GITEA_DOMAIN:-localhost}
+      GITEA__actions__ENABLED: "true"
+      # Pula a tela interativa de instalação.
+      GITEA__security__INSTALL_LOCK: "true"
+    volumes:
+      - gitea-data:/data
+      - /etc/timezone:/etc/timezone:ro
+      - /etc/localtime:/etc/localtime:ro
+    ports:
+      # 3000 no host costuma ser do Gotenberg dos projetos: Gitea fica na 3001.
+      - "${GITEA_HTTP_PORT:-3001}:3000"
+      - "${GITEA_SSH_PORT:-2222}:22"
+    networks: [devtools]
+    restart: unless-stopped
+
+volumes:
+  gitea-data:
+
+networks:
+  devtools:
+    external: true
+    name: devtools

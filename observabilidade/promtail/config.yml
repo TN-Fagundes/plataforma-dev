@@ -1,0 +1,87 @@
+# Promtail da plataforma: um por host, coleta os projetos que optarem por label.
+# Origem: auditoria-2.0/docker/promtail/config.yml (pipeline JSON Laravel + nginx).
+# Referência: https://grafana.com/docs/loki/latest/clients/promtail/configuration/
+
+server:
+  http_listen_port: 9080
+  grpc_listen_port: 0
+
+positions:
+  filename: /tmp/positions.yaml
+
+clients:
+  - url: http://loki:3100/loki/api/v1/push
+
+scrape_configs:
+  # Scrape logs de containers Docker via socket
+  - job_name: docker
+    docker_sd_configs:
+      - host: unix:///var/run/docker.sock
+        refresh_interval: 5s
+    relabel_configs:
+      # Extrai nome do container como label
+      - source_labels: ['__meta_docker_container_name']
+        regex: '/(.*)'
+        target_label: 'container'
+      # Extrai nome do serviço compose
+      - source_labels: ['__meta_docker_container_label_com_docker_compose_service']
+        target_label: 'service'
+      # Extrai nome do projeto compose
+      - source_labels: ['__meta_docker_container_label_com_docker_compose_project']
+        target_label: 'project'
+      # Opt-in por label: so entram containers que declaram, no compose do
+      # projeto, `labels: { logging: promtail }`. Substitui a allowlist por nome
+      # de projeto que vivia no auditoria-2.0 (docs/plano-migracao.md §7.1).
+      # O label `project` acima passa a ser OBRIGATORIO em toda query.
+      - source_labels: ['__meta_docker_container_label_logging']
+        regex: 'promtail'
+        action: keep
+      # Label constante: garante que todo stream tenha ao menos um par de
+      # labels, mesmo que os demais venham vazios (Loki rejeita stream sem label).
+      - target_label: 'job'
+        replacement: 'docker'
+    pipeline_stages:
+      # Garante que TODA entrada carregue ao menos um par de labels, mesmo
+      # quando o relabel do alvo nao produziu nenhum. Acontece com container
+      # efemero que morre antes de o Promtail conseguir inspeciona-lo
+      # ("could not inspect container info"): o alvo fica sem label nenhum e o
+      # Loki recusa a stream com 400 "at least one label pair is required per
+      # stream" — descartando o BATCH INTEIRO, junto com os logs bons que
+      # viajam nele. A regra de relabel "job: docker" nao alcanca esse caso,
+      # porque o alvo sequer chegou a ser relabelado com sucesso.
+      - static_labels:
+          job: docker
+      # Um unico estagio cobre os dois formatos. O nginx (json_combined) poe os
+      # campos no topo; o Monolog (Laravel) aninha sob "context". O "||" do
+      # JMESPath tenta o primeiro e cai pro segundo quando ausente.
+      - json:
+          expressions:
+            message: message
+            level_name: level_name
+            # nginx usa "time"; Monolog usa "datetime"
+            ts: 'time || datetime'
+            method: 'method || context.method'
+            status: 'status || context.status'
+            request_id: 'request_id || context.request_id'
+            # so nginx
+            uri: uri
+            request_time: request_time
+            # so Laravel
+            path: 'context.path'
+            latency_ms: 'context.latency_ms'
+            user_nip: 'context.user_nip'
+      # Monolog emite "INFO"/"ERROR"; normaliza pra casar com as queries.
+      - template:
+          source: level_name
+          template: '{{ ToLower .Value }}'
+      - labels:
+          level: level_name
+          method:
+          status:
+      - timestamp:
+          source: ts
+          format: RFC3339
+          action_on_failure: skip
+      # NAO ha estagio "output": a linha original (JSON inteiro) e preservada,
+      # porque os paineis do Grafana fazem "| json" sobre ela. Um
+      # "output: source: message" reduziria a linha a "HTTP Request".

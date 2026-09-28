@@ -1,0 +1,24 @@
+# Datasource Loki provisionado automaticamente
+# Referência: https://grafana.com/docs/grafana/latest/administration/provisioning/
+
+apiVersion: 1
+
+datasources:
+  - name: Loki
+    # uid fixo: dashboards (requests.json) e regras de alerta (rules.yml)
+    # referenciam "loki". Sem isto o Grafana gera um uid aleatorio e os
+    # paineis falham com "data source not found".
+    uid: loki
+    type: loki
+    access: proxy
+    url: http://loki:3100
+    isDefault: true
+    editable: false
+    jsonData:
+      maxLines: 1000
+      derivedFields:
+        # Extrai request_id como link clicável para filtrar logs relacionados
+        - name: request_id
+          matcherRegex: '"request_id":"([^"]+)"'
+          url: '/explore?orgId=1&left=["now-1h","now","Loki",{"refId":"A","expr":"{request_id=\"$${__value.raw}\"}"}]'
+          datasourceUid: self
