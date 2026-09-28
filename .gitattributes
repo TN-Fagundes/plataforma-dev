@@ -1,0 +1,2 @@
+# Composes, Makefile e configs rodam em WSL/Linux: sempre LF.
+* text=auto eol=lf
