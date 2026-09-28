@@ -2,8 +2,10 @@
 
 > **Status (2026-09-28):**
 > - **Fase 0:** repo com a estrutura da §3.1, rede `devtools`, backups de Sonar e Gitea,
->   inventário (Gitea: usuário `tnfagundes`, segredo `SONAR_TOKEN`). D1 = (a). **Pendente:**
->   rotacionar A2.
+>   inventário (Gitea: usuário `tnfagundes`, segredo `SONAR_TOKEN`). D1 = (a). **A2:** entradas removidas do
+>   `settings.json` (`auditoria-2.0@b711504`: senha do usuário, token pessoal e token de registro
+>   do runner). **Pendente (usuário):** trocar a senha, revogar o token pessoal e gerar novo token
+>   de registro; as credenciais seguem no histórico do git e no GitHub.
 > - **Fase 1 (Sonar): concluída.** Servidor migrado por cópia de volume, no ar em
 >   `plataforma-sonar`. Mudanças do §5.2 em `auditoria-2.0@ccf08ca` (`develop`). Validado: 5.3-1,
 >   5.3-2 (projeto, histórico, gate, profiles com S1135 desativada) e 5.3-4 (job `quality` verde
