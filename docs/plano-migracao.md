@@ -13,11 +13,11 @@
 >   ainda tem o `ci.yml` antigo. Desfazer quando a `develop` for integrada na `master`:
 >   `docker network disconnect auditoria-2-0-sonar_sonarnet plataforma-sonar-sonarqube-1`.
 >   (A ponte não sobrevive a um `up` que recrie o container.)
-> - **Fase 2 (Gitea):** volume copiado, no ar em `plataforma-gitea` (mesma porta 3001). Validado:
+> - **Fase 2 (Gitea): concluída.** Volume copiado, no ar em `plataforma-gitea` (mesma porta 3001). Validado:
 >   6.4-1 (healthz 200), 6.4-2 (repo com os mesmos refs, usuário `tnfagundes`, segredo
 >   `SONAR_TOKEN`), 6.4-3 (runner `dev-box-wsl` reconectou sozinho) e 6.4-5 (`git push gitea`).
 >   Mudanças do §6.3 em `auditoria-2.0@bd8c4ed`; o checkout via `GITHUB_SERVER_URL` funcionou no
->   job `quality`. **Pendente:** 6.4-4 (os dois jobs verdes nesse push).
+>   job `quality`. 6.4-4 ok: `quality` (gate OK, 16:20 UTC) e `e2e` verdes nesse push.
 > - Containers e volumes antigos (`auditoria-2-0-sonar*`, `auditoria-2-0-gitea*`) estão parados e
 >   preservados, para rollback. Limpeza futura: o runner `dev-box` (sem contato desde 2026-07-08,
 >   sobra da tentativa de runner em container), o volume `auditoria-2-0-gitea_runner-data` e os
