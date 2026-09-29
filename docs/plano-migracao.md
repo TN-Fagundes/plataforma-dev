@@ -51,8 +51,9 @@
 >   *Auditoria 2.0*, o dashboard e as 3 regras. Validado: *Explore* com
 >   `{project="auditoria-2-0-prod"}` traz logs; dashboard *Requests* com dados; regras com
 >   `health: ok`; SMTP entrega (teste por contact point temporário, porque o `email-alertas`
->   provisionado não tem botão *Test*). **Pendente:** `docker volume rm loki-storage
->   grafana-storage` no servidor (é o rollback) e contas nominais **Viewer** para quem consulta.
+>   provisionado não tem botão *Test*). Volumes antigos `loki-storage` e `grafana-storage`
+>   apagados no servidor pelo usuário: **sem rollback** para o Grafana embutido, e o histórico de
+>   logs anterior à migração se perdeu. **Pendente:** contas nominais **Viewer** para quem consulta.
 >
 > Caminhos `auditoria-2.0/...` são relativos à raiz daquele repositório; "o projeto", sem
 > qualificação, é o `auditoria-2.0`.
