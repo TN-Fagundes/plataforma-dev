@@ -1,6 +1,6 @@
 # Plano de migração — tirar Gitea, SonarQube e Grafana do `auditoria-2.0`
 
-> **Status (2026-09-28):**
+> **Status (2026-09-29):**
 > - **Fase 0:** repo com a estrutura da §3.1, rede `devtools`, backups de Sonar e Gitea,
 >   inventário (Gitea: usuário `tnfagundes`, segredo `SONAR_TOKEN`). D1 = (a). **A2:** entradas removidas do
 >   `settings.json` (`auditoria-2.0@b711504`: senha do usuário, token pessoal e token de registro
@@ -45,6 +45,14 @@
 >   (`grafana/alerting-prod/`); deploy, sync e migração em `observabilidade/PRODUCAO.md`. No
 >   `auditoria-2.0`: ADR-0013, stack embutida removida do compose de prod, `grafana-sync-prod`.
 >   **Pendente:** executar a migração no servidor (PRODUCAO.md, seção final).
+> - **Migração de prod (2026-09-29): executada e validada.** `plataforma-obs-prod` no ar no
+>   servidor (Grafana na 3001) e o `auditoria-2.0` rodando sem a stack embutida. O sync pela
+>   máquina de dev (`make grafana-sync-prod`, token `sync-auditoria-2-0`) criou a pasta
+>   *Auditoria 2.0*, o dashboard e as 3 regras. Validado: *Explore* com
+>   `{project="auditoria-2-0-prod"}` traz logs; dashboard *Requests* com dados; regras com
+>   `health: ok`; SMTP entrega (teste por contact point temporário, porque o `email-alertas`
+>   provisionado não tem botão *Test*). **Pendente:** `docker volume rm loki-storage
+>   grafana-storage` no servidor (é o rollback) e contas nominais **Viewer** para quem consulta.
 >
 > Caminhos `auditoria-2.0/...` são relativos à raiz daquele repositório; "o projeto", sem
 > qualificação, é o `auditoria-2.0`.

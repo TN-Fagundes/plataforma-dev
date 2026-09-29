@@ -86,6 +86,9 @@ usuários e tokens, não. Se for preciso backup do `grafana-data`, ele segue o p
    `GRAFANA_URL=http://<servidor>:3001` e `GRAFANA_TOKEN=<token>`. No `auditoria-2.0`:
    `make grafana-sync-prod`. Rode de novo a cada mudança nos dashboards ou regras.
 
+Na máquina de dev, rode o `make` pelo **Git Bash**: as receitas são `sh`, e o `make` do Windows
+sem `sh` no PATH do terminal cai no `cmd.exe` (`'unset' não é reconhecido...`).
+
 A partir da máquina de dev, o `curl` do sync precisa alcançar o servidor **sem passar pelo proxy
 corporativo**: o IP do servidor tem que estar no `NO_PROXY`/`no_proxy` do shell que roda o `make`.
 
@@ -129,7 +132,9 @@ Grafana no próprio `docker-compose.yml`, com o Grafana na porta 3001.
    - *Explore*: `{project="auditoria-2-0-prod"}` traz linhas de `app` e `nginx` recentes;
    - dashboard *Auditoria 2.0 - Requests* com **Projeto** = `auditoria-2-0-prod` mostra dados;
    - *Alerting → Alert rules*: as três regras da pasta *Auditoria 2.0* com health `ok`;
-   - *Alerting → Contact points → email-alertas → Test*: o e-mail chega.
+   - SMTP: o `email-alertas` é provisionado, fica só leitura e **não tem botão *Test***. Teste
+     por um contact point temporário (*+ Add contact point* → Email → mesmo endereço → *Test* →
+     *Send test notification*) e saia com *Cancel*, sem salvar.
 6. **Limpar**, só depois de validar: `docker volume rm loki-storage grafana-storage`. Até lá
    eles são o rollback: voltar o `auditoria-2.0` para a versão anterior e derrubar esta stack
    restaura o arranjo antigo com os dados dele.
