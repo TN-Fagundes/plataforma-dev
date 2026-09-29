@@ -101,5 +101,6 @@ obs-prod-copy: .env
 	scp -r observabilidade/docker-compose.prod.yml observabilidade/.env.prod.example \
 	       observabilidade/loki observabilidade/promtail observabilidade/grafana \
 	       "$$PROD_SSH:$$PROD_OBS_DIR/" && \
+	scp observabilidade/Makefile.prod "$$PROD_SSH:$$PROD_OBS_DIR/Makefile" && \
 	ssh "$$PROD_SSH" "cd '$$PROD_OBS_DIR' && cp -n .env.prod.example .env.prod; \
 	  chmod -R a+rX . && chmod 600 .env.prod && find . -exec ls -ld {} +"

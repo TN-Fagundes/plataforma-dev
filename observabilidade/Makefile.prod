@@ -1,0 +1,46 @@
+# Makefile do SERVIDOR de produção da observabilidade (Loki + Promtail + Grafana).
+#
+# No servidor, fica ao lado do docker-compose.prod.yml, renomeado para Makefile
+# (default do make). Não serve na máquina de dev: lá é o Makefile da raiz.
+# Operação e deploy: PRODUCAO.md.
+
+.PHONY: help up down restart ps logs perms
+
+.DEFAULT_GOAL := help
+
+C = docker compose -f docker-compose.prod.yml --env-file .env.prod
+
+# Parâmetro opcional: make logs s=grafana
+s ?=
+
+help:
+	@echo "up        sobe (ou aplica mudanca de config)"
+	@echo "down      derruba preservando os volumes"
+	@echo "restart   reinicia todos os servicos"
+	@echo "ps        status dos containers"
+	@echo "logs      logs em tempo real (todos, ou um: make logs s=grafana)"
+	@echo "perms     a+rX nos diretorios montados e 600 no .env.prod (rode apos cada copia)"
+
+.env.prod:
+	@echo "falta o .env.prod: cp .env.prod.example .env.prod e preencha"; exit 1
+
+up: .env.prod
+	$(C) up -d
+
+down: .env.prod
+	$(C) down
+
+restart: .env.prod
+	$(C) restart
+
+ps: .env.prod
+	$(C) ps
+
+logs: .env.prod
+	$(C) logs -f --tail=200 $(s)
+
+# O Grafana roda como uid 472 e precisa atravessar cada diretório montado; sem isso
+# ele sobe sem datasource e sem contact point. O .env.prod só é lido pelo compose.
+perms:
+	chmod -R a+rX .
+	chmod 600 .env.prod

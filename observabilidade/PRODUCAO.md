@@ -14,6 +14,7 @@ de prod" ([plano §7.2](../docs/plano-migracao.md)); no `auditoria-2.0`, ADR-001
 | Contact point + policy | [grafana/alerting-prod/](grafana/alerting-prod/) | só em prod; um destinatário (`GF_ALERTING_EMAIL_TO`) |
 | Dashboards e regras | repositório de cada aplicação | chegam pela API (`grafana-sync.sh`), nunca por arquivo |
 | Variáveis | [.env.prod.example](.env.prod.example) | copiar para `.env.prod` no servidor |
+| Operação | [Makefile.prod](Makefile.prod) | copiar como `Makefile` no servidor |
 
 ## Estrutura no servidor
 
@@ -22,6 +23,7 @@ Nada é buildado: as imagens são as oficiais do Grafana, e os configs entram po
 ```
 /caminho/observabilidade/
   docker-compose.prod.yml
+  Makefile                     (o Makefile.prod, renomeado)
   .env.prod                    (a partir do .env.prod.example)
   loki/config.yml
   promtail/config.yml
@@ -43,7 +45,7 @@ O `obs-prod-copy` pode ser rodado de novo a cada mudança de config: não sobres
 `.env.prod` já preenchido. Ele não sobe nem derruba nada; isso é manual, no servidor.
 
 **Depois de cada cópia, os diretórios precisam de `a+rX`** (o `obs-prod-copy` já aplica; numa
-cópia manual, rode `chmod -R a+rX /caminho/observabilidade` no servidor). O Grafana roda como
+cópia manual, rode `make perms` no diretório da stack, no servidor). O Grafana roda como
 uid **472** e precisa atravessar cada diretório montado. Um `scp -r` com `umask 0077` cria
 diretórios `700`, e o Grafana sobe **sem ler o provisioning**: sem datasource e sem contact point,
 com um `Permission denied` visível só em `docker compose logs grafana`. O `.env.prod` fica `600`:
@@ -51,13 +53,18 @@ quem o lê é o `docker compose`, não o Grafana.
 
 ## Operação
 
+No servidor, no diretório da stack (`make help` lista os alvos):
+
 ```bash
-C="docker compose -f docker-compose.prod.yml --env-file .env.prod"
-$C up -d          # sobe (ou aplica mudança de config)
-$C ps
-$C logs -f grafana
-$C down           # derruba preservando os volumes
+make up           # sobe (ou aplica mudança de config)
+make ps
+make logs s=grafana
+make down         # derruba preservando os volumes
+make perms        # a+rX nos diretórios e 600 no .env.prod, após cada cópia
 ```
+
+Sem `make` no servidor, o equivalente é
+`docker compose -f docker-compose.prod.yml --env-file .env.prod <comando>`.
 
 Os dados ficam nos volumes `plataforma-obs-prod_loki-data` (logs, 7 dias) e
 `plataforma-obs-prod_grafana-data` (usuários, service accounts, e o que o `grafana-sync` enviou).
@@ -114,7 +121,7 @@ Grafana no próprio `docker-compose.yml`, com o Grafana na porta 3001.
    (`docker-compose.yml` e `Makefile` novos) e rodar `make up-prod`. O alvo usa
    `--remove-orphans`, que remove os containers `loki`, `promtail` e `grafana` antigos e libera a
    3001. Os volumes antigos (`loki-storage`, `grafana-storage`) **não** são apagados.
-3. **Subir esta stack:** `$C up -d`.
+3. **Subir esta stack:** `make up`.
 4. **Service account e sync:** criar a service account `sync-auditoria-2-0` e o token; na máquina
    de dev, preencher `GRAFANA_PROD_URL`/`GRAFANA_PROD_TOKEN` no `.env` do `auditoria-2.0` e rodar
    `make grafana-sync-prod`.
